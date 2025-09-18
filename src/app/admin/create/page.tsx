@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createAdmin } from '@/app/actions/adminActions'
 
+// This component handles the form and authorization
 function AdminCreateForm({ token }: { token: string | null }) {
   const [authorized, setAuthorized] = useState<boolean | null>(null) // null = checking
   const [email, setEmail] = useState('')
@@ -114,13 +115,19 @@ function AdminCreateForm({ token }: { token: string | null }) {
   )
 }
 
-export default function AdminCreatePage() {
+// This wrapper component safely uses useSearchParams
+function AdminCreateWrapper() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
 
+  return <AdminCreateForm token={token} />
+}
+
+// The main page exports a Suspense wrapper
+export default function AdminCreatePage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <AdminCreateForm token={token} />
+      <AdminCreateWrapper />
     </Suspense>
   )
 }
