@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Users, DollarSign, Shield, Mail } from 'lucide-react'
+import { Users, Coins, Shield, Mail } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -89,7 +89,7 @@ export default function Home() {
             
             <div className="text-center p-6">
               <div className="bg-green-100 dark:bg-green-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <Coins className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
               <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Contribution Tracking

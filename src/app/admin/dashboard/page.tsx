@@ -1,13 +1,11 @@
 import { redirect } from 'next/navigation'
 import AdminDashboardClient from './AdminDashboardClient'
-import { getLoggedInMember } from '@/lib/auth'
+import { query } from '@/lib/db'
 
-// Types
+// ✅ Types
 interface Admin {
   id: string
-  full_name: string
   email: string
-  role: string
   created_at: string
 }
 
@@ -41,45 +39,55 @@ interface AdminDashboardData {
   }
 }
 
-// Fetch admin + members + contributions
 async function getAdminData(email: string): Promise<AdminDashboardData | null> {
   try {
-    // Fetch admin data
-    const resAdmin = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/admins?email=${email}`)
-    if (!resAdmin.ok) return null
-    const adminData: Admin = await resAdmin.json()
+    // ✅ Get admin info from DB, ensuring role is never null
+    const adminResult = await query<Admin>(
+      `SELECT id, email, created_at
+       FROM admins WHERE email = $1 LIMIT 1`,
+      [email]
+    )
+    const admin = adminResult.rows[0]
+    if (!admin) return null
 
-    // Fetch members
-    const resMembers = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/members`)
-    const members: Member[] = resMembers.ok ? await resMembers.json() : []
+    // ✅ Get members
+    const membersResult = await query<Member>(
+      `SELECT id, name, email, phone, created_at FROM members ORDER BY created_at DESC`
+    )
+    const members = membersResult.rows
 
-    // Fetch contributions
-    const resContributions = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/contributions`)
-    const contributions: Contribution[] = resContributions.ok ? await resContributions.json() : []
+    // ✅ Get contributions
+    const contributionsResult = await query<Contribution>(
+      `SELECT id, member_id, amount, date_paid, recorded_by, notes, created_at 
+       FROM contributions ORDER BY created_at DESC`
+    )
+    const contributions = contributionsResult.rows
 
-    // Calculate total contributions
+    // ✅ Calculate total contributions
     const totalContributions = contributions.reduce((sum, c) => sum + Number(c.amount), 0)
 
     return {
-      admin: adminData,
+      admin,
       members,
       contributions,
       totalContributions,
       errors: {
-        members: resMembers.ok ? null : 'Failed to fetch members',
-        contributions: resContributions.ok ? null : 'Failed to fetch contributions',
+        members: null,
+        contributions: null,
         total: null,
       },
     }
   } catch (err) {
-    console.error('[AdminDashboard] Error fetching data:', err)
+    console.error('[AdminDashboard] DB query error:', err)
     return null
   }
 }
 
-// Server Component
+// ✅ Server Component
 export default async function AdminDashboard() {
-  const admin = await getLoggedInMember()
+  // Get logged-in admin from cookie/session
+  const { getLoggedInAdmin } = await import('@/lib/auth')
+  const admin = await getLoggedInAdmin()
 
   if (!admin) {
     redirect('/auth/admin')

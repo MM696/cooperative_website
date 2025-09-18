@@ -2,73 +2,28 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Shield, Users, DollarSign, Plus, LogOut, Download, Trash2 } from 'lucide-react'
+import { Shield, Users, DollarSign, Plus, LogOut, Download, Trash2, Banknote, Coins, Menu, X, Wallet } from 'lucide-react'
 
 /* ---------------------- TYPES ---------------------- */
 
-interface Admin {
-  id: string
-  email: string
-  role: string
-  full_name?: string
-  created_at: string
-}
-
-interface Member {
-  id: string
-  full_name: string
-  email: string
-  phone?: string
-  created_at: string
-}
-
+interface Admin { id: string; email: string; created_at: string }
+interface Member { id: string; full_name: string; email: string; phone?: string; created_at: string }
 interface Contribution {
-  id: string
-  member_id: string
-  amount: number
-  date_paid: string
-  recorded_by: string
-  notes?: string
-  created_at: string
-  members?: {
-    full_name: string
-    email: string
-  }
+  id: string; member_id: string; amount: number; date_paid: string;
+  recorded_by: string; notes?: string; created_at: string;
+  members?: { full_name: string; email: string }
 }
-
-interface AdminDashboardClientProps {
-  admin: Admin
-  members: Member[]
-  contributions: Contribution[]
-  totalContributions: number
-}
-
+interface AdminDashboardClientProps { admin: Admin; members: Member[]; contributions: Contribution[]; totalContributions: number }
 type Tab = 'overview' | 'members' | 'contributions' | 'add-member' | 'add-contribution'
-
-interface MemberFormData {
-  full_name: string
-  email: string
-  phone: string
-}
-
-interface ContributionFormData {
-  member_id: string
-  amount: string
-  date_paid: string
-  recorded_by: string
-  notes: string
-}
+interface MemberFormData { full_name: string; email: string; phone: string }
+interface ContributionFormData { member_id: string; amount: string; date_paid: string; recorded_by: string; notes: string }
 
 /* ---------------------- COMPONENT ---------------------- */
 
-export default function AdminDashboardClient({
-  admin,
-  members,
-  contributions,
-  totalContributions
-}: AdminDashboardClientProps) {
+export default function AdminDashboardClient({ admin, members, contributions, totalContributions }: AdminDashboardClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const router = useRouter()
 
   const tabs: Tab[] = ['overview', 'members', 'contributions']
@@ -76,7 +31,6 @@ export default function AdminDashboardClient({
   /* ---------------------- HANDLERS ---------------------- */
 
   const handleSignOut = () => router.push('/')
-
   const handleDeleteMember = async (memberId: string) => {
     if (!confirm('Are you sure you want to delete this member?')) return
     try {
@@ -84,11 +38,8 @@ export default function AdminDashboardClient({
       const data = await res.json()
       if (!res.ok) alert(data.error || 'Error deleting member')
       else window.location.reload()
-    } catch {
-      alert('An unexpected error occurred')
-    }
+    } catch { alert('An unexpected error occurred') }
   }
-
   const handleDeleteContribution = async (contributionId: string) => {
     if (!confirm('Are you sure you want to delete this contribution?')) return
     try {
@@ -96,9 +47,7 @@ export default function AdminDashboardClient({
       const data = await res.json()
       if (!res.ok) alert(data.error || 'Error deleting contribution')
       else window.location.reload()
-    } catch {
-      alert('An unexpected error occurred')
-    }
+    } catch { alert('An unexpected error occurred') }
   }
 
   const exportToCSV = () => {
@@ -107,16 +56,9 @@ export default function AdminDashboardClient({
       ...members.map(member => {
         const memberContributions = contributions.filter(c => c.member_id === member.id)
         const totalAmount = memberContributions.reduce((sum, c) => sum + c.amount, 0)
-        return [
-          member.full_name,
-          member.email,
-          member.phone || '',
-          totalAmount.toFixed(2),
-          new Date(member.created_at).toLocaleDateString()
-        ]
+        return [member.full_name, member.email, member.phone || '', totalAmount.toFixed(2), new Date(member.created_at).toLocaleDateString()]
       })
     ].map(row => row.join(',')).join('\n')
-
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -126,11 +68,8 @@ export default function AdminDashboardClient({
     window.URL.revokeObjectURL(url)
   }
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
-
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
   /* ---------------------- RENDER ---------------------- */
 
@@ -143,15 +82,9 @@ export default function AdminDashboardClient({
             <Shield className="h-8 w-8 text-gray-600" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
           </div>
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={exportToCSV}
-              className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
-            >
-              <Download className="h-4 w-4" />
-              <span>Export CSV</span>
-            </button>
-            <span className="text-gray-700 dark:text-gray-300">Welcome, {admin.full_name || admin.email}</span>
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center space-x-4">            
             <button
               onClick={handleSignOut}
               className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -160,13 +93,33 @@ export default function AdminDashboardClient({
               <span>Sign Out</span>
             </button>
           </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center">
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="text-gray-600 dark:text-gray-400 focus:outline-none">
+              {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileOpen && (
+          <div className="md:hidden px-4 pb-4 space-y-2">            
+            <button
+              onClick={handleSignOut}
+              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Tabs */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
+          <nav className="flex space-x-8 overflow-x-auto">
             {tabs.map(tab => (
               <button
                 key={tab}
@@ -184,12 +137,13 @@ export default function AdminDashboardClient({
         </div>
       </div>
 
+     
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'overview' && (
           <div className="space-y-8">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Total Members */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <div className="flex items-center">
@@ -210,15 +164,13 @@ export default function AdminDashboardClient({
               {/* Total Contributions */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <div className="flex items-center">
-                  <DollarSign className="h-8 w-8 text-green-600" />
+                  <Banknote className="h-8 w-8 text-green-600" />
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                         Total Contributions
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                        {formatCurrency(totalContributions)}
-                      </dd>
+                      <dd className="text-lg font-medium text-gray-900 dark:text-white">₦{totalContributions}</dd>                      
                     </dl>
                   </div>
                 </div>
@@ -227,7 +179,7 @@ export default function AdminDashboardClient({
               {/* Total Payments */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <div className="flex items-center">
-                  <DollarSign className="h-8 w-8 text-purple-600" />
+                  <Coins className="h-8 w-8 text-purple-600" />
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
@@ -242,7 +194,7 @@ export default function AdminDashboardClient({
               </div>
 
               {/* Average Payment */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              {/*<div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <div className="flex items-center">
                   <DollarSign className="h-8 w-8 text-orange-600" />
                   <div className="ml-5 w-0 flex-1">
@@ -256,7 +208,7 @@ export default function AdminDashboardClient({
                     </dl>
                   </div>
                 </div>
-              </div>
+              </div>*/}
             </div>
           </div>
         )}
@@ -298,7 +250,7 @@ export default function AdminDashboardClient({
                         setActiveTab('add-contribution')
                         }}
                         >
-                          <DollarSign />
+                          <Banknote />
                         </button>
 
                         <button onClick={() => handleDeleteMember(member.id)}>
@@ -377,7 +329,7 @@ export default function AdminDashboardClient({
                   {contributions.length === 0 && (
                     <tr>
                       <td colSpan={5} className="px-6 py-8 text-center">
-                        <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <Wallet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-500 dark:text-gray-400">No contributions recorded yet</p>
                       </td>
                     </tr>

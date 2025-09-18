@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Shield, Mail, Lock, ArrowLeft, Users } from 'lucide-react'
-import { loginAdmin } from './action'
+import { Shield, Mail, Lock, ArrowLeft, Users, Loader2 } from 'lucide-react'
+import { loginAdmin } from '../../api/admin-login/action'
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('')
@@ -22,9 +22,14 @@ export default function AdminLogin() {
       const result = await loginAdmin(email, password)
 
       if (!result.success) {
-        setMessage(result.error || 'Login failed')
+        setMessage(result.message || 'Login failed')
       } else {
-        router.push('/admin/dashboard')
+        setMessage('✅ Login successful! Redirecting...')
+        if (result.redirectTo) {
+          router.push(result.redirectTo)
+        } else {
+          router.push('/admin/dashboard')
+        }
       }
     } catch (error) {
       console.error('Login error:', error)
@@ -86,11 +91,13 @@ export default function AdminLogin() {
             </div>
 
             {message && (
-              <div className={`p-4 rounded-lg ${
-                message.toLowerCase().includes('success')
-                  ? 'bg-green-50 text-green-800 border border-green-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
-              }`}>
+              <div
+                className={`p-4 rounded-lg transition-all ${
+                  message.includes('✅')
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
                 {message}
               </div>
             )}
@@ -98,9 +105,16 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
             </button>
           </form>
 

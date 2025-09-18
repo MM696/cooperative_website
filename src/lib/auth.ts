@@ -19,8 +19,15 @@ interface Member {
   created_at: string
 }
 
+interface Admin {
+  id: string
+  email: string
+  created_at: string
+}
+
 interface Session {
-  member_id: string
+  member_id?: string
+  admin_id?: string
   token: string
   expires_at: Date
 }
@@ -56,7 +63,36 @@ export async function getLoggedInMember(): Promise<Member | null> {
 
     return memberResult.rows[0] || null
   } catch (err) {
-    console.error('[AUTH] Invalid or expired token:', err)
+    console.error('[AUTH] Invalid or expired member token:', err)
+    return null
+  }
+}
+
+// -------------------------
+// Get logged-in admin
+// -------------------------
+export async function getLoggedInAdmin(): Promise<Admin | null> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('admin_session_token')?.value
+  if (!token) return null
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { admin_id: string }
+
+    const sessionResult = await query<Session>(
+      'SELECT admin_id, token, expires_at FROM admin_sessions WHERE token = $1 AND expires_at > NOW()',
+      [token]
+    )
+    if (sessionResult.rows.length === 0) return null
+
+    const adminResult = await query<Admin>(
+      'SELECT id, email, created_at FROM admins WHERE id = $1',
+      [decoded.admin_id]
+    )
+
+    return adminResult.rows[0] || null
+  } catch (err) {
+    console.error('[AUTH] Invalid or expired admin token:', err)
     return null
   }
 }
@@ -79,7 +115,33 @@ export async function createMemberSession(memberId: string): Promise<string> {
     value: token,
     httpOnly: true,
     path: '/',
-    expires: expiresAt.getTime(), // as number
+    expires: expiresAt.getTime(),
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  })
+
+  return token
+}
+
+// -------------------------
+// Create admin session
+// -------------------------
+export async function createAdminSession(adminId: string): Promise<string> {
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  const token = jwt.sign({ admin_id: adminId }, JWT_SECRET, { expiresIn: '7d' })
+
+  await query(
+    'INSERT INTO admin_sessions (admin_id, token, expires_at) VALUES ($1, $2, $3)',
+    [adminId, token, expiresAt.toISOString()]
+  )
+
+  const cookieStore = await cookies()
+  cookieStore.set({
+    name: 'admin_session_token',
+    value: token,
+    httpOnly: true,
+    path: '/',
+    expires: expiresAt.getTime(),
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
   })
@@ -120,14 +182,19 @@ export async function logoutMember(): Promise<void> {
   const cookieStore = await cookies()
   const token = cookieStore.get('session_token')?.value
   if (token) {
-    // Delete session from DB (revokes token)
     await query('DELETE FROM member_sessions WHERE token = $1', [token])
-
-    // Correct usage for cookieStore.delete()
-    cookieStore.delete({
-      name: 'session_token',
-      path: '/', // optional
-    })
+    cookieStore.delete({ name: 'session_token', path: '/' })
   }
 }
 
+// -------------------------
+// Logout admin
+// -------------------------
+export async function logoutAdmin(): Promise<void> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('admin_session_token')?.value
+  if (token) {
+    await query('DELETE FROM admin_sessions WHERE token = $1', [token])
+    cookieStore.delete({ name: 'admin_session_token', path: '/' })
+  }
+}
