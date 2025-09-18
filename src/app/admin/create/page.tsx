@@ -1,14 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createAdmin } from '@/app/actions/adminActions'
 
-export default function AdminCreatePage() {
-  const searchParams = useSearchParams()
-  const token = searchParams.get('token')
-
-  const [authorized, setAuthorized] = useState(false)
+function AdminCreateForm({ token }: { token: string | null }) {
+  const [authorized, setAuthorized] = useState<boolean | null>(null) // null = checking
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState<string | null>(null)
@@ -17,6 +14,8 @@ export default function AdminCreatePage() {
   useEffect(() => {
     if (token === process.env.NEXT_PUBLIC_ADMIN_SETUP_TOKEN) {
       setAuthorized(true)
+    } else {
+      setAuthorized(false)
     }
   }, [token])
 
@@ -25,22 +24,33 @@ export default function AdminCreatePage() {
     setLoading(true)
     setMessage(null)
 
-    const result = await createAdmin(email, password)
-
-    if (result.success) {
-      setMessage('✅ Admin account created successfully!')
-      setEmail('')
-      setPassword('')
-    } else {
-      setMessage(`❌ ${result.error}`)
+    try {
+      const result = await createAdmin(email, password)
+      if (result.success) {
+        setMessage('✅ Admin account created successfully!')
+        setEmail('')
+        setPassword('')
+      } else {
+        setMessage(`❌ ${result.error}`)
+      }
+    } catch {
+      setMessage('❌ Unexpected error occurred')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    setLoading(false)
+  if (authorized === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <p className="text-gray-700 dark:text-gray-300">Checking authorization...</p>
+      </div>
+    )
   }
 
   if (!authorized) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <p className="text-red-600 font-semibold">
           Unauthorized: Invalid or missing token
         </p>
@@ -49,49 +59,68 @@ export default function AdminCreatePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md"
+        className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-8 w-full max-w-md"
       >
-        <h1 className="text-2xl font-bold text-center mb-6">Create Admin</h1>
+        <h1 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-white">
+          Create Admin
+        </h1>
 
         {message && (
-          <p className="mb-4 text-center text-sm font-medium">
+          <p
+            className={`mb-4 text-center text-sm font-medium ${
+              message.includes('✅') ? 'text-green-700' : 'text-red-600'
+            }`}
+          >
             {message}
           </p>
         )}
 
         <div className="mb-4">
-          <label className="block mb-2 font-medium">Email</label>
+          <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300">Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full border rounded-xl p-2 focus:ring-2 focus:ring-blue-500"
+            className="w-full border rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Enter email"
           />
         </div>
 
         <div className="mb-4">
-          <label className="block mb-2 font-medium">Password</label>
+          <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300">Password</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full border rounded-xl p-2 focus:ring-2 focus:ring-blue-500"
+            className="w-full border rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Enter password"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 disabled:opacity-50"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-2 rounded-xl transition-colors"
         >
           {loading ? 'Creating...' : 'Create Admin'}
         </button>
       </form>
     </div>
+  )
+}
+
+export default function AdminCreatePage() {
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token')
+
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <AdminCreateForm token={token} />
+    </Suspense>
   )
 }
