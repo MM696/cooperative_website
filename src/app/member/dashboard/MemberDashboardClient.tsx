@@ -30,13 +30,16 @@ interface MemberDashboardClientProps {
   updateMemberAction: (memberId: string, updates: { name?: string; email?: string; phone?: string }) => Promise<any>
 }
 
+type Tab = 'overview' | 'members' | 'contributions' | 'add-member' | 'add-contribution'
+
+
 export default function MemberDashboardClient({
   member,
   contributions,
   totalContributions,
   updateMemberAction,
 }: MemberDashboardClientProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'contributions' | 'profile'>('overview')
+  const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ full_name: member.name, email: member.email, phone: member.phone })
   const router = useRouter()
@@ -86,7 +89,7 @@ export default function MemberDashboardClient({
           {['overview', 'contributions', 'profile'].map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => setActiveTab(tab as Tab)}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
               }`}
@@ -166,7 +169,7 @@ export default function MemberDashboardClient({
         )}
 
         {/* Profile */}
-        {activeTab === 'profile' && (
+        {['overview','members','contributions'].map(tab => (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">Profile Information</h3>
             <div>
@@ -218,7 +221,7 @@ export default function MemberDashboardClient({
               </div>
             )}
           </div>
-        )}
+        ))}
       </main>
     </div>
   )
