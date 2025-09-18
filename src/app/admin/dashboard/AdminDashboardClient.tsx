@@ -84,7 +84,7 @@ export default function AdminDashboardClient({
       const data = await res.json()
       if (!res.ok) alert(data.error || 'Error deleting member')
       else window.location.reload()
-    } catch (_error) {
+    } catch {
       alert('An unexpected error occurred')
     }
   }
@@ -96,7 +96,7 @@ export default function AdminDashboardClient({
       const data = await res.json()
       if (!res.ok) alert(data.error || 'Error deleting contribution')
       else window.location.reload()
-    } catch (_error) {
+    } catch {
       alert('An unexpected error occurred')
     }
   }
