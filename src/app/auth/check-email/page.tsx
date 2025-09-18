@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import { Mail, ArrowLeft } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
-export default function CheckEmailPage() {
+function CheckEmailContent() {
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
 
@@ -16,7 +17,9 @@ export default function CheckEmailPage() {
           Check Your Email
         </h2>
         <p className="text-gray-700 dark:text-gray-300 mb-6">
-          We’ve sent a verification link to <strong>{email}</strong>. Please click the link in the email to complete your signup.
+          {email
+            ? <>We’ve sent a verification link to <strong>{email}</strong>. Please click the link in the email to complete your signup.</>
+            : 'We’ve sent you a verification email. Please click the link in the email to complete your signup.'}
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
           Didn’t receive the email? Check your spam folder or try signing up again.
@@ -30,5 +33,13 @@ export default function CheckEmailPage() {
         </Link>
       </div>
     </div>
+  )
+}
+
+export default function CheckEmailPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-center">Loading...</div>}>
+      <CheckEmailContent />
+    </Suspense>
   )
 }
