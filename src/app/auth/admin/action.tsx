@@ -3,11 +3,23 @@
 import { query } from '@/lib/db'
 import bcrypt from 'bcrypt'
 
+// ✅ Define the exact shape of an Admin row
+interface AdminRow {
+  id: string
+  email: string
+  password_hash: string
+}
+
 export async function loginAdmin(email: string, password: string) {
   try {
     console.log('[LOGIN] Attempting login for:', email)
 
-    const result = await query('SELECT * FROM admins WHERE email = $1 LIMIT 1', [email])
+    // ✅ Use generics to tell TS what the query returns
+    const result = await query<AdminRow>(
+      'SELECT id, email, password_hash FROM admins WHERE email = $1 LIMIT 1',
+      [email]
+    )
+
     console.log('[LOGIN] Query result:', result.rows)
 
     const admin = result.rows[0]
@@ -18,6 +30,7 @@ export async function loginAdmin(email: string, password: string) {
 
     console.log('[LOGIN] Admin found:', admin.id)
 
+    // ✅ Type-safe: admin.password_hash is guaranteed to be a string
     const valid = await bcrypt.compare(password, admin.password_hash)
     console.log('[LOGIN] Password valid?', valid)
 

@@ -2,34 +2,58 @@ import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import bcrypt from "bcrypt";
 
+// ✅ Define the shape of an admin row
+interface AdminRow {
+  id: string;
+  email: string;
+  password: string; // This should match the column name in your database
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body: { email?: string; password?: string } = await request.json();
     const { email, password } = body;
 
     if (!email || !password) {
-      return NextResponse.json({ error: "Email and password required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Email and password required" },
+        { status: 400 }
+      );
     }
 
-    // Check if admin exists
-    const result = await query("SELECT * FROM admins WHERE email = $1", [email]);
+    // ✅ Strongly type the query result
+    const result = await query<AdminRow>(
+      "SELECT id, email, password FROM admins WHERE email = $1 LIMIT 1",
+      [email]
+    );
+
     const admin = result.rows[0];
-
     if (!admin) {
-      return NextResponse.json({ error: "Admin not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Admin not found" },
+        { status: 404 }
+      );
     }
 
-    // Compare password (assumes hashed passwords)
+    // ✅ Type-safe password comparison
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
-      return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Invalid password" },
+        { status: 401 }
+      );
     }
 
-    // You could create a session token here (JWT or NextAuth, etc.)
-    // For now, just return success
-    return NextResponse.json({ success: true, admin: { id: admin.id, email: admin.email } });
+    // ✅ Safe response with only required fields
+    return NextResponse.json({
+      success: true,
+      admin: { id: admin.id, email: admin.email },
+    });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("[ADMIN LOGIN] ❌", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
