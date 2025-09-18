@@ -31,8 +31,8 @@ interface MemberDashboardData {
 async function getMemberData(email: string): Promise<MemberDashboardData | null> {
   console.log('Fetching member for email:', email)
 
-  const memberResult = await query('SELECT * FROM members WHERE email = $1', [email])
-  const member: Member | undefined = memberResult.rows[0]
+  const memberResult = await query<Member>('SELECT * FROM members WHERE email = $1', [email])
+  const member = memberResult.rows[0]
 
   if (!member) {
     console.log('No member found for email:', email)
@@ -41,11 +41,11 @@ async function getMemberData(email: string): Promise<MemberDashboardData | null>
 
   console.log('Member found:', member)
 
-  const contributionsResult = await query(
+  const contributionsResult = await query<Contribution>(
     'SELECT * FROM contributions WHERE member_id = $1 ORDER BY date_paid DESC',
     [member.id]
   )
-  const contributions: Contribution[] = contributionsResult.rows
+  const contributions = contributionsResult.rows
   const totalContributions = contributions.reduce((sum, c) => sum + Number(c.amount), 0)
 
   console.log('Contributions:', contributions, 'Total:', totalContributions)
@@ -60,13 +60,14 @@ export async function updateMemberAction(
 ) {
   'use server'
   const fields: string[] = []
-  const values: any[] = []
+  const values: (string | number)[] = []
   let idx = 1
 
-  for (const key in updates) {
-    if ((updates as any)[key] !== undefined) {
+  for (const key of Object.keys(updates) as (keyof typeof updates)[]) {
+    const value = updates[key]
+    if (value !== undefined) {
       fields.push(`${key} = $${idx}`)
-      values.push((updates as any)[key])
+      values.push(value)
       idx++
     }
   }
@@ -75,7 +76,7 @@ export async function updateMemberAction(
 
   values.push(memberId)
   const sql = `UPDATE members SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`
-  const result = await query(sql, values)
+  const result = await query<Member>(sql, values)
   return result.rows[0] || null
 }
 

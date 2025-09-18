@@ -1,5 +1,6 @@
 import pkg from 'pg'
 const { Pool } = pkg
+import type { QueryResultRow, QueryResult } from 'pg'
 
 // 🔧 Check and fail loudly if DATABASE_URL is missing
 if (!process.env.DATABASE_URL) {
@@ -20,13 +21,16 @@ const pool = new Pool({
 // Try connecting once when the app starts
 pool.connect()
   .then(() => console.log('[DB] ✅ Connected successfully'))
-  .catch((err) => {
+  .catch((err: Error) => {
     console.error('[DB] ❌ Connection error:', err.message)
     throw err // Stop execution if DB connection fails
   })
 
-// Export a helper to run queries
-export const query = async (text: string, params?: any[]) => {
+// Export a type-safe helper to run queries
+export async function query<T extends QueryResultRow = Record<string, unknown>>(
+  text: string,
+  params?: (string | number | boolean | null)[]
+): Promise<QueryResult<T>> {
   console.log(`[DB] 📝 Running query: ${text} with params: ${JSON.stringify(params)}`)
-  return pool.query(text, params)
+  return pool.query<T>(text, params)
 }

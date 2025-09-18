@@ -27,11 +27,8 @@ interface MemberDashboardClientProps {
   member: Member
   contributions: Contribution[]
   totalContributions: number
-  updateMemberAction: (memberId: string, updates: { name?: string; email?: string; phone?: string }) => Promise<any>
+  updateMemberAction: (memberId: string, updates: Partial<Pick<Member, 'name' | 'email' | 'phone'>>) => Promise<Member | null>
 }
-
-type Tab = 'overview' | 'members' | 'contributions' | 'add-member' | 'add-contribution'
-
 
 export default function MemberDashboardClient({
   member,
@@ -39,9 +36,13 @@ export default function MemberDashboardClient({
   totalContributions,
   updateMemberAction,
 }: MemberDashboardClientProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'contributions' | 'profile'>('overview')
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ full_name: member.name, email: member.email, phone: member.phone })
+  const [form, setForm] = useState<Pick<Member, 'name' | 'email' | 'phone'>>({
+    name: member.name,
+    email: member.email,
+    phone: member.phone,
+  })
   const router = useRouter()
 
   const handleSignOut = async () => {
@@ -61,8 +62,10 @@ export default function MemberDashboardClient({
     }
   }
 
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
-  const formatDate = (date: string) => new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -75,7 +78,10 @@ export default function MemberDashboardClient({
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-gray-700 dark:text-gray-300">Welcome, {member.name}</span>
-            <button onClick={handleSignOut} className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <button
+              onClick={handleSignOut}
+              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            >
               <LogOut className="h-4 w-4" />
               <span>Sign Out</span>
             </button>
@@ -86,12 +92,14 @@ export default function MemberDashboardClient({
       {/* Tabs */}
       <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-8">
-          {['overview', 'contributions', 'profile'].map(tab => (
+          {(['overview', 'contributions', 'profile'] as const).map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as Tab)}
+              onClick={() => setActiveTab(tab)}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === tab ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                activeTab === tab
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -108,7 +116,9 @@ export default function MemberDashboardClient({
               <DollarSign className="h-8 w-8 text-green-600" />
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Contributions</dt>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                    Total Contributions
+                  </dt>
                   <dd className="text-lg font-medium text-gray-900 dark:text-white">{formatCurrency(totalContributions)}</dd>
                 </dl>
               </div>
@@ -169,15 +179,15 @@ export default function MemberDashboardClient({
         )}
 
         {/* Profile */}
-        {['overview','members','contributions'].map(tab => (
+        {activeTab === 'profile' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">Profile Information</h3>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
               <input
                 type="text"
-                name="full_name"
-                value={form.full_name}
+                name="name"
+                value={form.name}
                 disabled={!editing}
                 onChange={handleChange}
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -207,21 +217,33 @@ export default function MemberDashboardClient({
             </div>
 
             {!editing ? (
-              <button onClick={() => setEditing(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+              <button
+                onClick={() => setEditing(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
                 Edit Profile
               </button>
             ) : (
               <div className="flex space-x-2">
-                <button onClick={handleSave} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                <button
+                  onClick={handleSave}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
                   Save
                 </button>
-                <button onClick={() => { setEditing(false); setForm({ full_name: member.name, email: member.email, phone: member.phone }) }} className="bg-gray-300 dark:bg-gray-600 text-black dark:text-white px-4 py-2 rounded hover:bg-gray-400">
+                <button
+                  onClick={() => {
+                    setEditing(false)
+                    setForm({ name: member.name, email: member.email, phone: member.phone })
+                  }}
+                  className="bg-gray-300 dark:bg-gray-600 text-black dark:text-white px-4 py-2 rounded hover:bg-gray-400"
+                >
                   Cancel
                 </button>
               </div>
             )}
           </div>
-        ))}
+        )}
       </main>
     </div>
   )
