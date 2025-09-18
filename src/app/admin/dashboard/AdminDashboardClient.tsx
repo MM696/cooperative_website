@@ -71,24 +71,34 @@ export default function AdminDashboardClient({
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const router = useRouter()
 
+  const tabs: Tab[] = ['overview', 'members', 'contributions']
+
   /* ---------------------- HANDLERS ---------------------- */
 
   const handleSignOut = () => router.push('/')
 
   const handleDeleteMember = async (memberId: string) => {
     if (!confirm('Are you sure you want to delete this member?')) return
-    const res = await fetch(`/api/members?id=${memberId}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (!res.ok) alert(data.error || 'Error deleting member')
-    else window.location.reload()
+    try {
+      const res = await fetch(`/api/members?id=${memberId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) alert(data.error || 'Error deleting member')
+      else window.location.reload()
+    } catch (_error) {
+      alert('An unexpected error occurred')
+    }
   }
 
   const handleDeleteContribution = async (contributionId: string) => {
     if (!confirm('Are you sure you want to delete this contribution?')) return
-    const res = await fetch(`/api/contributions?id=${contributionId}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (!res.ok) alert(data.error || 'Error deleting contribution')
-    else window.location.reload()
+    try {
+      const res = await fetch(`/api/contributions?id=${contributionId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) alert(data.error || 'Error deleting contribution')
+      else window.location.reload()
+    } catch (_error) {
+      alert('An unexpected error occurred')
+    }
   }
 
   const exportToCSV = () => {
@@ -157,10 +167,10 @@ export default function AdminDashboardClient({
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8">
-            {['overview','members','contributions'].map(tab => (
+            {tabs.map(tab => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab as Tab)}
+                onClick={() => setActiveTab(tab)}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === tab
                     ? 'border-gray-500 text-gray-600 dark:text-gray-400'
