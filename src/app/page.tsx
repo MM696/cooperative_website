@@ -1,36 +1,88 @@
-import Link from 'next/link'
-import { Users, Coins, Shield, Mail } from 'lucide-react'
+'use client'
 
-export default function Home() {
+import Link from 'next/link'
+import { Users, Menu,Coins, Shield, Mail, X } from 'lucide-react'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+
+export default function Header() {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const menuVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }, // slower slide
+    exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
+  }
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-2">
-              <Users className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Cooperative Manager
-              </h1>
-            </div>
-            <div className="flex space-x-4">
+     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-6">
+          {/* Logo / Title */}
+          <div className="flex items-center space-x-2">
+            <Users className="h-8 w-8 text-blue-600" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Cooperative Manager
+            </h1>
+          </div>
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex space-x-4">
+            <Link
+              href="/auth/member"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+            >
+              Member Login
+            </Link>
+            <Link
+              href="/auth/admin"
+              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+            >
+              Admin Login
+            </Link>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
+          >
+            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={menuVariants}
+              className="flex flex-col space-y-2 pb-4 md:hidden"
+            >
               <Link
                 href="/auth/member"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors text-center"
+                onClick={() => setIsOpen(false)}
               >
                 Member Login
               </Link>
               <Link
                 href="/auth/admin"
-                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors text-center"
+                onClick={() => setIsOpen(false)}
               >
                 Admin Login
               </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </header>  
+      
 
       {/* Hero Section */}
       <section className="py-20">
