@@ -119,12 +119,12 @@ export default function AdminDashboardClient({ admin, members, contributions, to
       {/* Tabs */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8 overflow-x-auto">
+          <nav className="flex space-x-1 sm:space-x-8 overflow-x-auto scrollbar-hide">
             {tabs.map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
                   activeTab === tab
                     ? 'border-gray-500 text-gray-600 dark:text-gray-400'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -215,53 +215,72 @@ export default function AdminDashboardClient({ admin, members, contributions, to
 
         {activeTab === 'members' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 All Members
               </h3>
               <button
                 onClick={() => setActiveTab('add-member')}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors w-full sm:w-auto justify-center"
               >
                 <Plus className="h-4 w-4" />
                 <span>Add Member</span>
               </button>
             </div>
-            <div className="overflow-x-auto">
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Join Date</th>
-                    <th>Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Phone</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Join Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {members.map(member => (
                     <tr key={member.id}>
-                      <td>{member.full_name}</td>
-                      <td>{member.email}</td>
-                      <td>{member.phone || '-'}</td>
-                      <td>{formatDate(member.created_at)}</td>
-                      <td>
-                        <button onClick={() => { setSelectedMember(member)
-                        setActiveTab('add-contribution')
-                        }}
-                        >
-                          <Banknote />
-                        </button>
-
-                        <button onClick={() => handleDeleteMember(member.id)}>
-                          <Trash2 />
-                        </button>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                        {member.full_name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {member.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {member.phone || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {formatDate(member.created_at)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button 
+                            onClick={() => { 
+                              setSelectedMember(member)
+                              setActiveTab('add-contribution')
+                            }}
+                            className="text-green-600 hover:text-green-700"
+                            title="Add Contribution"
+                          >
+                            <Banknote className="h-4 w-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteMember(member.id)}
+                            className="text-red-600 hover:text-red-700"
+                            title="Delete Member"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                   {members.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center py-8">
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                         No members found
                       </td>
                     </tr>
@@ -269,17 +288,72 @@ export default function AdminDashboardClient({ admin, members, contributions, to
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden">
+              {members.length === 0 ? (
+                <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  No members found
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {members.map(member => (
+                    <div key={member.id} className="px-4 py-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {member.full_name}
+                          </h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                            {member.email}
+                          </p>
+                          <div className="mt-2 flex flex-col space-y-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <span className="font-medium">Phone:</span> {member.phone || 'Not provided'}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <span className="font-medium">Joined:</span> {formatDate(member.created_at)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2 ml-4">
+                          <button 
+                            onClick={() => { 
+                              setSelectedMember(member)
+                              setActiveTab('add-contribution')
+                            }}
+                            className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                            title="Add Contribution"
+                          >
+                            <Banknote className="h-4 w-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteMember(member.id)}
+                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Delete Member"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {activeTab === 'contributions' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 All Contributions
               </h3>
             </div>
-            <div className="overflow-x-auto">
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
@@ -336,6 +410,55 @@ export default function AdminDashboardClient({ admin, members, contributions, to
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden">
+              {contributions.length === 0 ? (
+                <div className="px-4 py-8 text-center">
+                  <Wallet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400">No contributions recorded yet</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {contributions.map((contribution) => (
+                    <div key={contribution.id} className="px-4 py-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {contribution.members?.full_name || 'Unknown Member'}
+                          </h4>
+                          <div className="mt-2 flex flex-col space-y-1">
+                            <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                              {formatCurrency(contribution.amount)}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <span className="font-medium">Date:</span> {formatDate(contribution.date_paid)}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <span className="font-medium">Recorded by:</span> {contribution.recorded_by}
+                            </p>
+                            {contribution.notes && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                <span className="font-medium">Notes:</span> {contribution.notes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <button
+                            onClick={() => handleDeleteContribution(contribution.id)}
+                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Delete Contribution"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
