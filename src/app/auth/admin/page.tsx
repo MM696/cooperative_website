@@ -120,8 +120,11 @@ export default function AdminLogin() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Need admin access? Contact the system administrator
+              Need admin access? 
             </p>
+            <Link href="/auth/admin-signup" className="text-sm text-blue-600 hover:underline">
+              Request admin access
+            </Link>
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
