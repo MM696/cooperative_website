@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Shield, Users, DollarSign, Plus, LogOut, Download, Trash2, Banknote, Coins, Menu, X, Wallet } from 'lucide-react'
+import { Shield, Users, DollarSign, Plus, LogOut, Loader2, Download, Trash2, Banknote, Coins, Menu, X, Wallet } from 'lucide-react'
+import { signOutAdmin } from '@/app/actions/adminActions'
 
 /* ---------------------- TYPES ---------------------- */
 
@@ -24,13 +25,23 @@ export default function AdminDashboardClient({ admin, members, contributions, to
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const router = useRouter()
 
   const tabs: Tab[] = ['overview', 'members', 'contributions']
 
   /* ---------------------- HANDLERS ---------------------- */
 
-  const handleSignOut = () => router.push('/')
+  const handleSignOut = async () => {
+    if (signingOut) return
+    setSigningOut(true)
+    try {
+      await signOutAdmin()
+      router.push('/')
+    } catch {
+      setSigningOut(false)
+    }
+  }
   const handleDeleteMember = async (memberId: string) => {
     if (!confirm('Are you sure you want to delete this member?')) return
     try {
@@ -87,10 +98,11 @@ export default function AdminDashboardClient({ admin, members, contributions, to
           <div className="hidden md:flex items-center space-x-4">            
             <button
               onClick={handleSignOut}
-              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              disabled={signingOut}
+              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-60"
             >
-              <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
+              {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+              <span>{signingOut ? 'Signing out...' : 'Sign Out'}</span>
             </button>
           </div>
 
@@ -107,10 +119,11 @@ export default function AdminDashboardClient({ admin, members, contributions, to
           <div className="md:hidden px-4 pb-4 space-y-2">            
             <button
               onClick={handleSignOut}
-              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              disabled={signingOut}
+              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-60"
             >
-              <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
+              {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+              <span>{signingOut ? 'Signing out...' : 'Sign Out'}</span>
             </button>
           </div>
         )}

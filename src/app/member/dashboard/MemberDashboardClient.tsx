@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Users, Banknote, Calendar, Wallet, LogOut, X } from 'lucide-react'
+import { Users, Banknote, Calendar, Wallet, LogOut, Loader2, X } from 'lucide-react'
 
 interface Member {
   id: string
@@ -49,6 +49,7 @@ export default function MemberDashboardClient({
     phone: member.phone,
   })
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
 
   // ✅ New modal state
   const [modalOpen, setModalOpen] = useState(false)
@@ -57,8 +58,14 @@ export default function MemberDashboardClient({
   const router = useRouter()
 
   const handleSignOut = async () => {
-    await fetch('/api/member-logout', { method: 'POST' })
-    router.push('/')
+    if (signingOut) return
+    setSigningOut(true)
+    try {
+      await fetch('/api/member-logout', { method: 'POST' })
+      router.push('/')
+    } catch {
+      setSigningOut(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,10 +119,11 @@ export default function MemberDashboardClient({
             <span className="text-gray-700 dark:text-gray-300">Welcome, {memberState.name}</span>
             <button
               onClick={handleSignOut}
-              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              disabled={signingOut}
+              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-60"
             >
-              <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
+              {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+              <span>{signingOut ? 'Signing out...' : 'Sign Out'}</span>
             </button>
           </div>
 
@@ -135,10 +143,11 @@ export default function MemberDashboardClient({
           <div className="md:hidden bg-white dark:bg-gray-800 px-4 py-4 space-y-4 border-t border-gray-200 dark:border-gray-700">            
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              disabled={signingOut}
+              className="w-full flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-60"
             >
-              <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
+              {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+              <span>{signingOut ? 'Signing out...' : 'Sign Out'}</span>
             </button>
           </div>
         )}

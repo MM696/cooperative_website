@@ -18,13 +18,13 @@ export async function POST(req: Request) {
     try {
       // Check for existing pending admin signup
       const existing = await query(
-        'SELECT id FROM admin_signup_tokens WHERE email = $1',
+        'SELECT id FROM cooperative.admin_signup_tokens WHERE email = $1',
         [email]
       )
 
       if (existing.rows.length > 0) {
         await query(
-          `UPDATE admin_signup_tokens
+          `UPDATE cooperative.admin_signup_tokens
            SET name = $1, phone = $2, token = $3, expires_at = $4, updated_at = NOW()
            WHERE email = $5`,
           [name, phone, token, expiresAt, email]
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         console.log(`[ADMIN SIGNUP] Updated pending admin signup for ${email}`)
       } else {
         await query(
-          `INSERT INTO admin_signup_tokens (name, email, phone, token, expires_at)
+          `INSERT INTO cooperative.admin_signup_tokens (name, email, phone, token, expires_at)
            VALUES ($1, $2, $3, $4, $5)`,
           [name, email, phone, token, expiresAt]
         )

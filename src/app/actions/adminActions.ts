@@ -2,6 +2,7 @@
 
 import { query } from '@/lib/db'
 import bcrypt from 'bcrypt'
+import { logoutAdmin } from '@/lib/auth'
 
 export async function createAdmin(email: string, password: string) {
   try {
@@ -9,7 +10,7 @@ export async function createAdmin(email: string, password: string) {
 
     // ✅ Check if admin already exists
     const existing = await query<{ id: string }>(
-      'SELECT id FROM admins WHERE email = $1 LIMIT 1',
+      'SELECT id FROM cooperative.admins WHERE email = $1 LIMIT 1',
       [email]
     )
 
@@ -22,7 +23,7 @@ export async function createAdmin(email: string, password: string) {
 
     // ✅ Insert new admin into database
     await query(
-      'INSERT INTO admins (email, password_hash) VALUES ($1, $2)',
+      'INSERT INTO cooperative.admins (email, password_hash) VALUES ($1, $2)',
       [email, passwordHash]
     )
 
@@ -31,4 +32,8 @@ export async function createAdmin(email: string, password: string) {
     console.error('[ADMIN] Error creating admin:', error)
     return { success: false, error: 'Failed to create admin' }
   }
+}
+
+export async function signOutAdmin() {
+  await logoutAdmin()
 }

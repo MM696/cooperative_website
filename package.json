@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate": "node scripts/migrate.mjs",
+    "delete-user": "node scripts/delete-user.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

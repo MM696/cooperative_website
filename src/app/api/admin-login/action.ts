@@ -17,7 +17,7 @@ export async function loginAdmin(email: string, password: string) {
 
     // ✅ Fetch admin from DB
     const result = await query<AdminRow>(
-      'SELECT id, email, password_hash FROM admins WHERE email = $1 LIMIT 1',
+      'SELECT id, email, password_hash FROM cooperative.admins WHERE email = $1 LIMIT 1',
       [email]
     )
 

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // ✅ Verify admin
     const adminResult = await query<AdminRow>(
-      "SELECT * FROM admins WHERE email = $1",
+      "SELECT * FROM cooperative.admins WHERE email = $1",
       [admin_email]
     );
     const adminData = adminResult.rows[0];
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // ✅ Insert contribution
     const insertResult = await query<ContributionRow>(
-      `INSERT INTO contributions (member_id, amount, date_paid, recorded_by, notes)
+      `INSERT INTO cooperative.contributions (member_id, amount, date_paid, recorded_by, notes)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
       [member_id, amount, date_paid, recorded_by, notes ?? null]
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     // ✅ Get member information
     const memberResult = await query<MemberRow>(
-      "SELECT * FROM members WHERE id = $1",
+      "SELECT * FROM cooperative.members WHERE id = $1",
       [member_id]
     );
     const member = memberResult.rows[0];
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     // ✅ Get total contributions
     const contributionsResult = await query<Pick<ContributionRow, "amount">>(
-      "SELECT amount FROM contributions WHERE member_id = $1",
+      "SELECT amount FROM cooperative.contributions WHERE member_id = $1",
       [member_id]
     );
 

@@ -1,4 +1,6 @@
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import jwt from 'jsonwebtoken'
 import MemberDashboardClient from '../../member/dashboard/MemberDashboardClient'
 import { query } from '@/lib/db'
 
@@ -27,43 +29,57 @@ interface MemberDashboardData {
   totalContributions: number
 }
 
-// Fetch member + contributions
-async function getMemberData(email: string): Promise<MemberDashboardData | null> {
-  console.log('Fetching member for email:', email)
+async function getLoggedInMemberId(): Promise<string | null> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('member_token')?.value
+  if (!token || !process.env.JWT_SECRET) return null
 
-  const memberResult = await query<Member>('SELECT * FROM members WHERE email = $1', [email])
-  const member = memberResult.rows[0]
-
-  if (!member) {
-    console.log('No member found for email:', email)
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    if (typeof decoded === 'string' || typeof decoded.id !== 'string') return null
+    return decoded.id
+  } catch {
     return null
   }
+}
 
-  console.log('Member found:', member)
+async function getMemberData(memberId: string): Promise<MemberDashboardData | null> {
+  const memberResult = await query<Member>(
+    'SELECT id, name, email, phone, created_at FROM cooperative.members WHERE id = $1',
+    [memberId]
+  )
+  const member = memberResult.rows[0]
+
+  if (!member) return null
 
   const contributionsResult = await query<Contribution>(
-    'SELECT * FROM contributions WHERE member_id = $1 ORDER BY date_paid DESC',
+    'SELECT id, member_id, amount, date_paid, recorded_by, notes, created_at FROM cooperative.contributions WHERE member_id = $1 ORDER BY date_paid DESC',
     [member.id]
   )
   const contributions = contributionsResult.rows
   const totalContributions = contributions.reduce((sum, c) => sum + Number(c.amount), 0)
 
-  console.log('Contributions:', contributions, 'Total:', totalContributions)
-
-  return { member, contributions, totalContributions }
+  return {
+    member: { ...member, phone: member.phone ?? '' },
+    contributions,
+    totalContributions,
+  }
 }
 
 // Server Action
 export async function updateMemberAction(
   memberId: string,
-  updates: { full_name?: string; email?: string; phone?: string }
+  updates: { name?: string; email?: string; phone?: string }
 ) {
   'use server'
+  const sessionMemberId = await getLoggedInMemberId()
+  if (!sessionMemberId || sessionMemberId !== memberId) return null
+
   const fields: string[] = []
-  const values: (string | number)[] = []
+  const values: string[] = []
   let idx = 1
 
-  for (const key of Object.keys(updates) as (keyof typeof updates)[]) {
+  for (const key of ['name', 'email', 'phone'] as const) {
     const value = updates[key]
     if (value !== undefined) {
       fields.push(`${key} = $${idx}`)
@@ -74,23 +90,22 @@ export async function updateMemberAction(
 
   if (fields.length === 0) return null
 
-  values.push(memberId)
-  const sql = `UPDATE members SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`
+  values.push(sessionMemberId)
+  const sql = `UPDATE cooperative.members SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, name, email, phone, created_at`
   const result = await query<Member>(sql, values)
-  return result.rows[0] || null
+  const member = result.rows[0]
+  return member ? { ...member, phone: member.phone ?? '' } : null
 }
 
 // Server Component
 export default async function MemberDashboard() {
-  const email = process.env.MOCK_MEMBER_EMAIL
+  const memberId = await getLoggedInMemberId()
 
-  if (!email) {
-    console.error('MOCK_MEMBER_EMAIL not set in environment!')
+  if (!memberId) {
     redirect('/auth/member')
   }
 
-  const memberData = await getMemberData(email)
-  console.log('MemberDashboardClient props:', memberData)
+  const memberData = await getMemberData(memberId)
 
   if (!memberData) {
     redirect('/auth/member?error=not_found')

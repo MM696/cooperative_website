@@ -1,15 +1,25 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
+import bcrypt from 'bcryptjs'
 import { query } from '@/lib/db'
 import nodemailer from 'nodemailer'
 
 export async function POST(req: Request) {
   try {
-    const { name, email, phone } = await req.json()
+    const { name, email, phone, password } = await req.json()
 
-    if (!name || !email || !phone) {
+    if (!name || !email || !phone || !password) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
     }
+
+    if (typeof password !== 'string' || password.length < 8) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters' },
+        { status: 400 }
+      )
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10)
 
     // Generate token & expiry
     const token = crypto.randomBytes(32).toString('hex')
@@ -18,23 +28,23 @@ export async function POST(req: Request) {
     try {
       // Check for existing pending signup
       const existing = await query(
-        'SELECT id FROM member_signup_tokens WHERE email = $1',
+        'SELECT id FROM cooperative.member_signup_tokens WHERE email = $1',
         [email]
       )
 
       if (existing.rows.length > 0) {
         await query(
-          `UPDATE member_signup_tokens
-           SET name = $1, phone = $2, token = $3, expires_at = $4, updated_at = NOW()
-           WHERE email = $5`,
-          [name, phone, token, expiresAt, email]
+          `UPDATE cooperative.member_signup_tokens
+           SET name = $1, phone = $2, password = $3, token = $4, expires_at = $5, updated_at = NOW()
+           WHERE email = $6`,
+          [name, phone, hashedPassword, token, expiresAt, email]
         )
         console.log(`[SIGNUP] Updated pending signup for ${email}`)
       } else {
         await query(
-          `INSERT INTO member_signup_tokens (name, email, phone, token, expires_at)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [name, email, phone, token, expiresAt]
+          `INSERT INTO cooperative.member_signup_tokens (name, email, phone, password, token, expires_at)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [name, email, phone, hashedPassword, token, expiresAt]
         )
         console.log(`[SIGNUP] Created new signup token for ${email}`)
       }
@@ -46,8 +56,8 @@ export async function POST(req: Request) {
       )
     }
 
-    // Generate magic link
-    const magicLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/set-password?token=${token}`
+    // Generate magic link — verify email, password already set at signup
+    const magicLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-signup?token=${token}`
     console.log(`[SIGNUP] Magic link generated: ${magicLink}`)
 
     // --- ✅ SEND EMAIL VIA SMTP (Nodemailer) ---

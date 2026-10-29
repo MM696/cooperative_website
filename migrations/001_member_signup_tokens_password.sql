@@ -1,0 +1,2 @@
+ALTER TABLE IF EXISTS member_signup_tokens ADD COLUMN IF NOT EXISTS password TEXT;
+ALTER TABLE IF EXISTS member_signup_tokens ADD COLUMN IF NOT EXISTS used BOOLEAN DEFAULT false;

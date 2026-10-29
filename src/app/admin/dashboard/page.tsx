@@ -44,7 +44,7 @@ async function getAdminData(email: string): Promise<AdminDashboardData | null> {
     // ✅ Get admin info from DB, ensuring role is never null
     const adminResult = await query<Admin>(
       `SELECT id, email, created_at
-       FROM admins WHERE email = $1 LIMIT 1`,
+       FROM cooperative.admins WHERE email = $1 LIMIT 1`,
       [email]
     )
     const admin = adminResult.rows[0]
@@ -52,14 +52,14 @@ async function getAdminData(email: string): Promise<AdminDashboardData | null> {
 
     // ✅ Get members
     const membersResult = await query<Member>(
-      `SELECT id, name, email, phone, created_at FROM members ORDER BY created_at DESC`
+      `SELECT id, name, email, phone, created_at FROM cooperative.members ORDER BY created_at DESC`
     )
     const members = membersResult.rows
 
     // ✅ Get contributions
     const contributionsResult = await query<Contribution>(
       `SELECT id, member_id, amount, date_paid, recorded_by, notes, created_at 
-       FROM contributions ORDER BY created_at DESC`
+       FROM cooperative.contributions ORDER BY created_at DESC`
     )
     const contributions = contributionsResult.rows
 

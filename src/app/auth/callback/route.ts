@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     // ✅ Strongly type the query result
     const result = await query<AdminRow>(
-      "SELECT id, email, password FROM admins WHERE email = $1 LIMIT 1",
+      "SELECT id, email, password FROM cooperative.admins WHERE email = $1 LIMIT 1",
       [email]
     );
 

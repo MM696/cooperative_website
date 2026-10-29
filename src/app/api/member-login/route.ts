@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 // ✅ Strongly type the DB result
 interface MemberRow {
   id: string;
-  full_name: string;
+  name: string;
   email: string;
   password: string;
   phone?: string;
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
     // ✅ Use generic type for query
     const result = await query<MemberRow>(
-      "SELECT * FROM members WHERE email = $1 LIMIT 1",
+      "SELECT * FROM cooperative.members WHERE email = $1 LIMIT 1",
       [email]
     );
 
@@ -49,9 +49,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Include correct name field (full_name, not name)
     const jwtToken = jwt.sign(
-      { id: member.id, email: member.email, name: member.full_name },
+      { id: member.id, email: member.email, name: member.name },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }
     );
@@ -60,7 +59,7 @@ export async function POST(req: Request) {
       success: true,
       member: {
         id: member.id,
-        full_name: member.full_name,
+        name: member.name,
         email: member.email,
       },
     });

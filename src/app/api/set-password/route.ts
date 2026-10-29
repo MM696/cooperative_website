@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     // 1️⃣ Validate token
     const result = await query<SignupTokenRow>(
-      "SELECT * FROM member_signup_tokens WHERE token = $1 LIMIT 1",
+      "SELECT * FROM cooperative.member_signup_tokens WHERE token = $1 LIMIT 1",
       [token]
     );
 
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 
     // 3️⃣ Insert member
     const insert = await query<MemberRow>(
-      `INSERT INTO members (name, email, phone, password, created_at)
+      `INSERT INTO cooperative.members (name, email, phone, password, created_at)
        VALUES ($1, $2, $3, $4, NOW())
        RETURNING id, name, email`,
       [signup.name, signup.email, signup.phone?? null, hashedPassword]
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     }
 
     // 4️⃣ Mark token as used
-    await query("UPDATE member_signup_tokens SET used = true WHERE token = $1", [
+    await query("UPDATE cooperative.member_signup_tokens SET used = true WHERE token = $1", [
       token,
     ]);
 
