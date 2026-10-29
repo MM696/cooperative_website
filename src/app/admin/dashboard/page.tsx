@@ -25,6 +25,7 @@ interface Contribution {
   recorded_by: string
   notes?: string
   created_at: string
+  members?: { full_name: string; email: string }
 }
 
 interface AdminDashboardData {
@@ -52,7 +53,7 @@ async function getAdminData(email: string): Promise<AdminDashboardData | null> {
 
     // ✅ Get members
     const membersResult = await query<Member>(
-      `SELECT id, name, email, phone, created_at FROM cooperative.members ORDER BY created_at DESC`
+      `SELECT id, name AS full_name, email, phone, created_at FROM cooperative.members ORDER BY created_at DESC`
     )
     const members = membersResult.rows
 
@@ -61,7 +62,13 @@ async function getAdminData(email: string): Promise<AdminDashboardData | null> {
       `SELECT id, member_id, amount, date_paid, recorded_by, notes, created_at 
        FROM cooperative.contributions ORDER BY created_at DESC`
     )
-    const contributions = contributionsResult.rows
+    const membersById = new Map(members.map(m => [m.id, m]))
+    const contributions = contributionsResult.rows.map(c => {
+      const member = membersById.get(c.member_id)
+      return member
+        ? { ...c, members: { full_name: member.full_name, email: member.email } }
+        : c
+    })
 
     // ✅ Calculate total contributions
     const totalContributions = contributions.reduce((sum, c) => sum + Number(c.amount), 0)

@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     // ✅ Get member information
     const memberResult = await query<MemberRow>(
-      "SELECT * FROM cooperative.members WHERE id = $1",
+      "SELECT id, name AS full_name, email, phone, created_at FROM cooperative.members WHERE id = $1",
       [member_id]
     );
     const member = memberResult.rows[0];
