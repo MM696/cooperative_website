@@ -19,6 +19,22 @@ export async function POST(req: Request) {
       )
     }
 
+    const taken = await query<{ email: string; phone: string }>(
+      'SELECT email, phone FROM cooperative.members WHERE email = $1 OR phone = $2 LIMIT 1',
+      [email, phone]
+    )
+    if (taken.rows[0]) {
+      return NextResponse.json(
+        {
+          error:
+            taken.rows[0].email === email
+              ? 'An account with this email already exists. Please log in.'
+              : 'This phone number is already registered to another member.',
+        },
+        { status: 409 }
+      )
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10)
 
     // Generate token & expiry

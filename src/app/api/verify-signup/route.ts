@@ -103,6 +103,18 @@ export async function POST(req: Request) {
 
     return response
   } catch (err) {
+    if ((err as { code?: string }).code === '23505') {
+      const constraint = (err as { constraint?: string }).constraint
+      return NextResponse.json(
+        {
+          error:
+            constraint === 'members_phone_key'
+              ? 'This phone number is already registered to another member. Please sign up again with a different number.'
+              : 'An account with this email already exists. Please log in.',
+        },
+        { status: 409 }
+      )
+    }
     console.error('[VERIFY SIGNUP] ❌', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
