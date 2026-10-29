@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
     // Generate token & expiry
     const token = crypto.randomBytes(32).toString('hex')
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
     try {
       // Check for existing pending signup
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
               Verify Signup
             </a>
           </p>
-          <p>This link will expire in 15 minutes.</p>
+          <p>This link will expire in 24 hours.</p>
         `,
       })
 
