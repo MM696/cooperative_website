@@ -1,6 +1,4 @@
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import nodemailer from 'nodemailer'
 
 export interface EmailData {
   to: string
@@ -9,20 +7,31 @@ export interface EmailData {
 }
 
 export async function sendEmail({ to, subject, html }: EmailData) {
+  const host = process.env.SMTP_HOST
+  const user = process.env.SMTP_USER
+  const pass = process.env.SMTP_PASS
+  const port = Number(process.env.SMTP_PORT || 587)
+
+  if (!host || !user || !pass) {
+    return { success: false, error: 'SMTP is not configured' }
+  }
+
   try {
-    const { data, error } = await resend.emails.send({
-      from: 'Cooperative Management <noreply@yourdomain.com>',
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
+    })
+
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM,
       to,
       subject,
       html,
     })
 
-    if (error) {
-      console.error('Email sending error:', error)
-      return { success: false, error }
-    }
-
-    return { success: true, data }
+    return { success: true, data: info }
   } catch (error) {
     console.error('Email service error:', error)
     return { success: false, error }
