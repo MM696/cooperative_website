@@ -1,7 +1,7 @@
 'use server'
 
 import { query } from '@/lib/db'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import { logoutAdmin } from '@/lib/auth'
 
 export async function createAdmin(email: string, password: string) {

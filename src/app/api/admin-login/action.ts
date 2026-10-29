@@ -1,7 +1,7 @@
 'use server'
 
 import { query } from '@/lib/db'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import { createAdminSession } from '@/lib/auth'
 
 // ✅ Define the exact shape of an Admin row

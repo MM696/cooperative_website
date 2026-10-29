@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Shield, Users, DollarSign, Plus, LogOut, Loader2, Download, Trash2, Banknote, Coins, Menu, X, Wallet } from 'lucide-react'
+import { Shield, Users, Plus, LogOut, Loader2, Trash2, Banknote, Coins, Menu, X, Wallet } from 'lucide-react'
 import { signOutAdmin } from '@/app/actions/adminActions'
 
 /* ---------------------- TYPES ---------------------- */
@@ -61,24 +61,6 @@ export default function AdminDashboardClient({ admin, members, contributions, to
     } catch { alert('An unexpected error occurred') }
   }
 
-  const exportToCSV = () => {
-    const csvContent = [
-      ['Member Name', 'Email', 'Phone', 'Total Contributions', 'Join Date'],
-      ...members.map(member => {
-        const memberContributions = contributions.filter(c => c.member_id === member.id)
-        const totalAmount = memberContributions.reduce((sum, c) => sum + c.amount, 0)
-        return [member.full_name, member.email, member.phone || '', totalAmount.toFixed(2), new Date(member.created_at).toLocaleDateString()]
-      })
-    ].map(row => row.join(',')).join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'members-report.csv'
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
-
   const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
@@ -95,7 +77,8 @@ export default function AdminDashboardClient({ admin, members, contributions, to
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-4">            
+          <div className="hidden md:flex items-center space-x-4">
+            <span className="text-gray-700 dark:text-gray-300">{admin.email}</span>
             <button
               onClick={handleSignOut}
               disabled={signingOut}

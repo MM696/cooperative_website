@@ -1,11 +1,14 @@
 import { cookies } from 'next/headers'
 import { query } from './db'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = process.env.JWT_SECRET!
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET is not set in environment variables')
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET is not set in environment variables')
+  }
+  return secret
 }
 
 // -------------------------
@@ -48,7 +51,7 @@ export async function getLoggedInMember(): Promise<Member | null> {
   if (!token) return null
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { member_id: string }
+    const decoded = jwt.verify(token, getJwtSecret()) as { member_id: string }
 
     const sessionResult = await query<Session>(
       'SELECT member_id, token, expires_at FROM cooperative.member_sessions WHERE token = $1 AND expires_at > NOW()',
@@ -77,7 +80,7 @@ export async function getLoggedInAdmin(): Promise<Admin | null> {
   if (!token) return null
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { admin_id: string }
+    const decoded = jwt.verify(token, getJwtSecret()) as { admin_id: string }
 
     const sessionResult = await query<Session>(
       'SELECT admin_id, token, expires_at FROM cooperative.admin_sessions WHERE token = $1 AND expires_at > NOW()',
@@ -102,7 +105,7 @@ export async function getLoggedInAdmin(): Promise<Admin | null> {
 // -------------------------
 export async function createMemberSession(memberId: string): Promise<string> {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-  const token = jwt.sign({ member_id: memberId }, JWT_SECRET, { expiresIn: '7d' })
+  const token = jwt.sign({ member_id: memberId }, getJwtSecret(), { expiresIn: '7d' })
 
   await query(
     'INSERT INTO cooperative.member_sessions (member_id, token, expires_at) VALUES ($1, $2, $3)',
@@ -128,7 +131,7 @@ export async function createMemberSession(memberId: string): Promise<string> {
 // -------------------------
 export async function createAdminSession(adminId: string): Promise<string> {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-  const token = jwt.sign({ admin_id: adminId }, JWT_SECRET, { expiresIn: '7d' })
+  const token = jwt.sign({ admin_id: adminId }, getJwtSecret(), { expiresIn: '7d' })
 
   await query(
     'INSERT INTO cooperative.admin_sessions (admin_id, token, expires_at) VALUES ($1, $2, $3)',
